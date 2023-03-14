@@ -40,7 +40,7 @@ class CuadroLex(Lexer):
         3. Recipe Section
             " ### Instrucciones ###"
     """
-    HEADER = r"#{1,3}\s*[a-zA-Z][a-zA-Z\s]*\s*#{1,3}"
+    HEADER = r"\#{1,3}\s*[a-zA-Z][a-zA-Z\s]*\s*\#{1,3}"
 
     """
     We need to recognize numbers to represent quiantities 
@@ -61,17 +61,17 @@ class CuadroLex(Lexer):
     IDENTIFIER = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
     tokens = {
+        "HEADER",
+        "IDENTIFIER",
         "END_LINE",
         "WHITESPACE",
         "ASSIGN",
         "OPEN_PARENT",
         "CLOSE_PARENT",
-        "HEADER",
         "NUMBER",
         "MLTS_UNIT",
         "GR_UNIT",
         "CARDINAL_UNIT",
-        "IDENTIFIER",
     }
 
     # Ignored pattern because we use logical lines with EOL
@@ -85,6 +85,14 @@ class CuadroLex(Lexer):
     def error(self, t):
         print("Illegal character '%s'" % t.value[0])
         self.index += 1
+
+    ######### Match Actions for this Lexer ###########################
+
+    # Numbers should have numeric value
+    @_(r"\d+")
+    def NUMBER(self, t):
+        t.value = int(t.value)
+        return t
 
 
 if __name__ == '__main__':
