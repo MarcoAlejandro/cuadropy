@@ -10,7 +10,7 @@ cases = [
     "# Pollo con Arroz #",
     "## Ingredientes ##",
     "### Pasos a seguir ###",
-    "atun_enlatado = 1un;",
+    "atun_enlatado = 1cu;",
     "tomate_rojo = 1000ml;",
     "200.",
     "200",
@@ -20,12 +20,11 @@ cases = [
 # Salmón al Horno #
 
 ## Ingredientes a utilizar ##
-lomo_salmon = 2cu ;
+lomo_salmon = 2cu;
 mayonesa = 80 gr;
 clara_huevo = 1cu;
-ajo = 1cu;
 limon = 1cu;
-sal = 10g;
+sal = 10gr;
 
 
 ### Pasos para preparar ###

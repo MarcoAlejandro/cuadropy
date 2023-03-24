@@ -22,7 +22,6 @@ class CuadroLex(Lexer):
         "OPEN_SQUARE_BRACKETS",
         "CLOSE_SQUARE_BRACKETS",
         "HEADER",
-        "IDENTIFIER",
         "STRING",
         "FLOAT",
         "INTEGER",
@@ -30,6 +29,7 @@ class CuadroLex(Lexer):
         "MLTS_UNIT",
         "GR_UNIT",
         "CARDINAL_UNIT",
+        "IDENTIFIER",
         # "WHITESPACE",
     }
 
@@ -82,7 +82,7 @@ class CuadroLex(Lexer):
 
     MLTS_UNIT = r"ml"
     GR_UNIT = r"gr"
-    CARDINAL_UNIT = r"un"
+    CARDINAL_UNIT = r"cu"
 
     STRING = r"\"[a-zA-Z0-9À-ÿ\s]*\""
 
