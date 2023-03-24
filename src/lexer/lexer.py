@@ -30,7 +30,7 @@ class CuadroLex(Lexer):
         "MLTS_UNIT",
         "GR_UNIT",
         "CARDINAL_UNIT",
-        "WHITESPACE",
+        # "WHITESPACE",
     }
 
     """
