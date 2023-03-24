@@ -1,4 +1,8 @@
+"""
+Try it with `python -m src.lexer`
+"""
 from . import CuadroLex
+
 
 lxr = CuadroLex()
 
@@ -42,4 +46,4 @@ for data in cases:
     print(f"TEST: '{data}' ")
     for tok in lxr.tokenize(data):
         print("type=%r, value=%r" % (tok.type, tok.value))
-    print("\n\n\n")
+    print("\n\n")
