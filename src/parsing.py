@@ -26,6 +26,7 @@ class CuadroParser(Parser):
     AST_NODE_INGREDIENTS_HEADER = "ingredients-header"
     AST_NODE_RECIPE_HEADER = "recipe-header"
     AST_NODE_INGREDIENT_DECLARATION = "ingredient-declaration"
+    AST_NODE_FUNCTION_BASED_DECLARATION = "variable-declaration"
     AST_FUNCTION_CALL_EOL = "function-call-eol"
     AST_FUNCTION_CALL = "function-call"
     AST_FUNCTION_ARGS = "function-args"
@@ -50,9 +51,37 @@ class CuadroParser(Parser):
             p.GR_UNIT,
         )
 
+    # Ingredient declaration
+    @_("IDENTIFIER ASSIGN INTEGER MLTS_UNIT END_LINE")
+    def code_expr(self, p):
+        return (
+            self.AST_NODE_INGREDIENT_DECLARATION,
+            p.IDENTIFIER,
+            p.INTEGER,
+            p.MLTS_UNIT,
+        )
+
+    # Ingredient declaration
+    @_("IDENTIFIER ASSIGN INTEGER CARDINAL_UNIT END_LINE")
+    def code_expr(self, p):
+        return (
+            self.AST_NODE_INGREDIENT_DECLARATION,
+            p.IDENTIFIER,
+            p.INTEGER,
+            p.CARDINAL_UNIT,
+        )
+
     @_("IDENTIFIER OPEN_PARENT")
     def open_funct(self, p):
         return p.IDENTIFIER
+
+    # Declaration based on return type
+    @_('IDENTIFIER ASSIGN open_funct arglist CLOSE_PARENT END_LINE')
+    def code_expr(self, p):
+        return (
+            self.AST_NODE_FUNCTION_BASED_DECLARATION,
+            [p.IDENTIFIER, p.open_funct, p.arglist]
+        )
 
     # Function calls
     @_('open_funct arglist CLOSE_PARENT END_LINE')
@@ -111,7 +140,6 @@ class CuadroParser(Parser):
             self.AST_FUNCTION_ARGS,
             [p.IDENTIFIER] + p.arglist[1]
         )
-
 
 
 if __name__ == "__main__":
