@@ -40,7 +40,10 @@ class CuadroParser(Parser):
     AST_ARGS = "args"
     AST_ARGUMENT = "argument"
 
-    AST_UNIT = "ast-unit"
+    AST_UNIT = "unit"
+    AST_NUMBER = "number"
+    AST_QUANTITY = "quantity"
+    AST_STRING = "string"
 
     AST_IDENTIFIER = "identifier"
 
@@ -70,23 +73,18 @@ class CuadroParser(Parser):
         elif p.HEADER.count("#") == 6:
             return (self.AST_NODE_RECIPE_HEADER, p.HEADER.replace("#", ""))
 
-    @_("declaration END_LINE")
+    @_("declaration END_LINE", "funct_call END_LINE")
     def expr(self, p):
-        return p.declaration
-
-    @_("funct_call END_LINE")
-    def expr(self, p):
-        return p.funct_call
+        return p[0]
 
     # Declaration
 
-    @_("IDENTIFIER ASSIGN INTEGER unit")
+    @_("IDENTIFIER ASSIGN quantity")
     def declaration(self, p):
         return (
             self.AST_NODE_INGREDIENT_DECLARATION,
             p.IDENTIFIER,
-            p.INTEGER,
-            p.unit[1],
+            p.quantity,
         )
 
     @_("IDENTIFIER ASSIGN funct_call")
@@ -125,27 +123,37 @@ class CuadroParser(Parser):
 
     # Argument
 
-    @_("funct_call")
+    @_("funct_call", "identifier", "string", "quantity")
     def argument(self, p):
-        return (self.AST_ARGUMENT, p.funct_call)
+        return (self.AST_ARGUMENT, p[0])
 
-    @_("identifier")
-    def argument(self, p):
-        return (self.AST_ARGUMENT, p.identifier)
+    # String
+
+    @_("STRING")
+    def string(self, p):
+        return (self.AST_STRING, p.STRING)
+
+    # Quantity
+
+    @_("number unit")
+    def quantity(self, p):
+        return (self.AST_QUANTITY, p.number[1], p.unit[1])
+
+    # Number
+
+    @_("FLOAT", "INTEGER")
+    def number(self, p):
+        return (self.AST_NUMBER, p[0])
 
     # unit
 
-    @_("GR_UNIT")
+    @_("GR_UNIT", "MLTS_UNIT", "CARDINAL_UNIT")
     def unit(self, p):
-        return (self.AST_UNIT, p.GR_UNIT)
+        return (self.AST_UNIT, p[0])
 
-    @_("MLTS_UNIT")
+    @_("empty")  # default
     def unit(self, p):
-        return (self.AST_UNIT, p.MLTS_UNIT)
-
-    @_("CARDINAL_UNIT")
-    def unit(self, p):
-        return (self.AST_UNIT, p.CARDINAL_UNIT)
+        return (self.AST_UNIT, CuadroLex.CARDINAL_UNIT)
 
     # identifier
 
