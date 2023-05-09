@@ -14,26 +14,55 @@ class CuadroParser(Parser):
 
     Our implementation of CUADRO is represented by logical lines.
     Thus, our Start Symbol for the grammar of a logical line
-    is the function `code_expr`.
+    is the function `expr`.
 
-    A `code_expr` can be any of the valid CUADRO instructions.
+    A `expr` can be any of the valid CUADRO instructions.
     """
 
     tokens = CuadroLex.tokens
 
     # AST node types
+
+    AST_PROGRAM = "cuadro"
+
+    AST_EXPRESSIONS = "expressions"
+
     AST_NODE_TITLE_HEADER = "title-header"
     AST_NODE_INGREDIENTS_HEADER = "ingredients-header"
     AST_NODE_RECIPE_HEADER = "recipe-header"
+
     AST_NODE_INGREDIENT_DECLARATION = "ingredient-declaration"
     AST_NODE_FUNCTION_BASED_DECLARATION = "variable-declaration"
-    AST_FUNCTION_CALL_EOL = "function-call-eol"
-    AST_FUNCTION_CALL = "function-call"
-    AST_FUNCTION_ARGS = "function-args"
 
-    # CUADRO must recognize Section headers
+    AST_FUNCTION_CALL = "function-call"
+
+    AST_ARGLIST = "args-list"
+    AST_ARGS = "args"
+    AST_ARGUMENT = "argument"
+
+    AST_UNIT = "ast-unit"
+
+    AST_IDENTIFIER = "identifier"
+
+    # CUADRO
+
+    @_("expressions")
+    def cuadro(self, p):
+        # return (self.AST_PROGRAM, p.expressions[1])
+        return p.expressions[1]
+
+    @_("expr")
+    def expressions(self, p):
+        return (self.AST_EXPRESSIONS, [p.expr])
+
+    @_("expressions expr")
+    def expressions(self, p):
+        return (self.AST_EXPRESSIONS, p.expressions[1] + [p.expr])
+
+    # top level expresions that CUADRO supports
+
     @_("HEADER")
-    def code_expr(self, p):
+    def expr(self, p):
         if p.HEADER.count("#") == 2:
             return (self.AST_NODE_TITLE_HEADER, p.HEADER.replace("#", ""))
         elif p.HEADER.count("#") == 4:
@@ -41,86 +70,91 @@ class CuadroParser(Parser):
         elif p.HEADER.count("#") == 6:
             return (self.AST_NODE_RECIPE_HEADER, p.HEADER.replace("#", ""))
 
-    # Ingredient declaration
-    @_("IDENTIFIER ASSIGN INTEGER GR_UNIT END_LINE")
-    def code_expr(self, p):
+    @_("declaration END_LINE")
+    def expr(self, p):
+        return p.declaration
+
+    @_("funct_call END_LINE")
+    def expr(self, p):
+        return p.funct_call
+
+    # Declaration
+
+    @_("IDENTIFIER ASSIGN INTEGER unit")
+    def declaration(self, p):
         return (
             self.AST_NODE_INGREDIENT_DECLARATION,
             p.IDENTIFIER,
             p.INTEGER,
-            p.GR_UNIT,
+            p.unit[1],
         )
 
-    # Ingredient declaration
-    @_("IDENTIFIER ASSIGN INTEGER MLTS_UNIT END_LINE")
-    def code_expr(self, p):
-        return (
-            self.AST_NODE_INGREDIENT_DECLARATION,
-            p.IDENTIFIER,
-            p.INTEGER,
-            p.MLTS_UNIT,
-        )
-
-    # Ingredient declaration
-    @_("IDENTIFIER ASSIGN INTEGER CARDINAL_UNIT END_LINE")
-    def code_expr(self, p):
-        return (
-            self.AST_NODE_INGREDIENT_DECLARATION,
-            p.IDENTIFIER,
-            p.INTEGER,
-            p.CARDINAL_UNIT,
-        )
-
-    @_("IDENTIFIER OPEN_PARENT")
-    def open_funct(self, p):
-        return p.IDENTIFIER
-
-    # Declaration based on return type
-    @_("IDENTIFIER ASSIGN open_funct arglist CLOSE_PARENT END_LINE")
-    def code_expr(self, p):
+    @_("IDENTIFIER ASSIGN funct_call")
+    def declaration(self, p):
         return (
             self.AST_NODE_FUNCTION_BASED_DECLARATION,
-            [p.IDENTIFIER, p.open_funct, p.arglist],
+            p.IDENTIFIER,
+            p.funct_call,
         )
 
-    # Function calls
-    @_("open_funct arglist CLOSE_PARENT END_LINE")
-    def code_expr(self, p):
-        return (self.AST_FUNCTION_CALL_EOL, [p.open_funct, p.arglist])
+    # function call
 
-    @_("IDENTIFIER")
-    def arglist(self, p):
-        return (self.AST_FUNCTION_ARGS, [p.IDENTIFIER])
-
-    @_("open_funct arglist CLOSE_PARENT")
+    @_("IDENTIFIER arglist")
     def funct_call(self, p):
-        return (self.AST_FUNCTION_CALL, [p.open_funct, p.arglist])
+        return (self.AST_FUNCTION_CALL, p.IDENTIFIER, p.arglist[1])
 
-    # arguments list declaration
-    @_("IDENTIFIER COMMA IDENTIFIER")
+    # arglist
+
+    @_("OPEN_PARENT args CLOSE_PARENT")
     def arglist(self, p):
-        return (self.AST_FUNCTION_ARGS, [p.IDENTIFIER0, p.IDENTIFIER1])
+        return (self.AST_ARGLIST, p.args[1])
+
+    # args
+
+    @_("empty")
+    def args(self, p):
+        return (self.AST_ARGS, [])
+
+    @_("argument")
+    def args(self, p):
+        return (self.AST_ARGS, [p.argument[1]])
+
+    @_("argument COMMA args")
+    def args(self, p):
+        return (self.AST_ARGS, [p.argument[1]] + p.args[1])
+
+    # Argument
 
     @_("funct_call")
-    def arglist(self, p):
-        return (self.AST_FUNCTION_CALL, [p.funct_call[1][0], p.funct_call[1][1]])
+    def argument(self, p):
+        return (self.AST_ARGUMENT, p.funct_call)
 
-    @_("funct_call COMMA arglist")
-    def arglist(self, p):
-        return (
-            self.AST_FUNCTION_CALL,
-            [p.funct_call[1][0], p.funct_call[1][1], p.arglist],
-        )
+    @_("identifier")
+    def argument(self, p):
+        return (self.AST_ARGUMENT, p.identifier)
 
-    @_("arglist COMMA IDENTIFIER")
-    def arglist(self, p):
-        return (
-            self.AST_FUNCTION_ARGS,
-            p.arglist[1].append(
-                p.IDENTIFIER
-            ),  # Appends the to identifiers from arglist eval
-        )
+    # unit
 
-    @_("IDENTIFIER COMMA arglist")
-    def arglist(self, p):
-        return (self.AST_FUNCTION_ARGS, [p.IDENTIFIER] + p.arglist[1])
+    @_("GR_UNIT")
+    def unit(self, p):
+        return (self.AST_UNIT, p.GR_UNIT)
+
+    @_("MLTS_UNIT")
+    def unit(self, p):
+        return (self.AST_UNIT, p.MLTS_UNIT)
+
+    @_("CARDINAL_UNIT")
+    def unit(self, p):
+        return (self.AST_UNIT, p.CARDINAL_UNIT)
+
+    # identifier
+
+    @_("IDENTIFIER")
+    def identifier(self, p):
+        return (self.AST_IDENTIFIER, p.IDENTIFIER)
+
+    # empty
+
+    @_("")
+    def empty(self, p):
+        pass
