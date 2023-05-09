@@ -1,5 +1,5 @@
 from src.lexer import CuadroLex
-from src.parsing import CuadroParser
+from src.parser import CuadroParser
 
 
 class CuadroFileProcessor:
@@ -13,4 +13,3 @@ class CuadroFileProcessor:
             for line in f:
                 result = self.parser.parse(self.lxr.tokenize(line))
                 print(result)
-
