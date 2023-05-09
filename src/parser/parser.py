@@ -47,12 +47,15 @@ class CuadroParser(Parser):
 
     AST_IDENTIFIER = "identifier"
 
-    # CUADRO
+    # cuadro : expressions
 
     @_("expressions")
     def cuadro(self, p):
         # return (self.AST_PROGRAM, p.expressions[1])
         return p.expressions[1]
+
+    # expressions : expr
+    #             | expressions expr
 
     @_("expr")
     def expressions(self, p):
@@ -63,6 +66,9 @@ class CuadroParser(Parser):
         return (self.AST_EXPRESSIONS, p.expressions[1] + [p.expr])
 
     # top level expresions that CUADRO supports
+    # expr : HEADER
+    #      | declaration END_LINE
+    #      | funct_call END_LINE
 
     @_("HEADER")
     def expr(self, p):
@@ -77,7 +83,8 @@ class CuadroParser(Parser):
     def expr(self, p):
         return p[0]
 
-    # Declaration
+    # declaration : IDENTIFIER ASSIGN quantity
+    #             | IDENTIFIER ASSIGN funct_call
 
     @_("IDENTIFIER ASSIGN quantity")
     def declaration(self, p):
@@ -95,23 +102,21 @@ class CuadroParser(Parser):
             p.funct_call,
         )
 
-    # function call
+    # funct_call : IDENTIFIER arglist
 
     @_("IDENTIFIER arglist")
     def funct_call(self, p):
         return (self.AST_FUNCTION_CALL, p.IDENTIFIER, p.arglist[1])
 
-    # arglist
+    # arglist : OPEN_PARENT args CLOSE_PARENT
 
     @_("OPEN_PARENT args CLOSE_PARENT")
     def arglist(self, p):
         return (self.AST_ARGLIST, p.args[1])
 
-    # args
-
-    @_("empty")
-    def args(self, p):
-        return (self.AST_ARGS, [])
+    # args : argument
+    #      | argument COMMA args
+    #      | empty
 
     @_("argument")
     def args(self, p):
@@ -121,31 +126,42 @@ class CuadroParser(Parser):
     def args(self, p):
         return (self.AST_ARGS, [p.argument[1]] + p.args[1])
 
-    # Argument
+    @_("empty")
+    def args(self, p):
+        return (self.AST_ARGS, [])
+
+    # argument : funct_call
+    #          | identifier
+    #          | string
+    #          | quantity
 
     @_("funct_call", "identifier", "string", "quantity")
     def argument(self, p):
         return (self.AST_ARGUMENT, p[0])
 
-    # String
+    # string : STRING
 
     @_("STRING")
     def string(self, p):
         return (self.AST_STRING, p.STRING)
 
-    # Quantity
+    # quantity : number unit
 
     @_("number unit")
     def quantity(self, p):
         return (self.AST_QUANTITY, p.number[1], p.unit[1])
 
-    # Number
+    # number : FLOAT
+    #        | INTEGER
 
     @_("FLOAT", "INTEGER")
     def number(self, p):
         return (self.AST_NUMBER, p[0])
 
-    # unit
+    # unit : GR_UNIT
+    #      | MLTS_UNIT
+    #      | CARDINAL_UNIT
+    #      | empty
 
     @_("GR_UNIT", "MLTS_UNIT", "CARDINAL_UNIT")
     def unit(self, p):
@@ -155,13 +171,13 @@ class CuadroParser(Parser):
     def unit(self, p):
         return (self.AST_UNIT, CuadroLex.CARDINAL_UNIT)
 
-    # identifier
+    # identifier : IDENTIFIER
 
     @_("IDENTIFIER")
     def identifier(self, p):
         return (self.AST_IDENTIFIER, p.IDENTIFIER)
 
-    # empty
+    # empty : epsilon
 
     @_("")
     def empty(self, p):
