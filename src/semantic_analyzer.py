@@ -35,6 +35,7 @@ class Ingredient:
 
     The amount
     """
+
     def __init__(self, name: str, amount: Amount):
         self.name: str = name
         self.amount: Amount = amount
@@ -64,7 +65,9 @@ class CookingStep(abc.ABC):
                 raise RuntimeError(f"Ingredient {ing} was used but never declared")
 
             if not self.ingredients_table[ing].is_usable():
-                raise RuntimeError(f"Cooking step {self.step} can't use ingredient {ing}. Did you already used it?")
+                raise RuntimeError(
+                    f"Cooking step {self.step} can't use ingredient {ing}. Did you already used it?"
+                )
 
     def do(self):
         # At this point somebody should have used `validate_ingredients`
@@ -75,7 +78,9 @@ class CookingStep(abc.ABC):
 
 class Fillet(CookingStep):
     def __init__(self, ingredients_table, *ingredients):
-        super(Fillet, self).__init__(self.__class__.__name__, ingredients_table, ingredients)
+        super(Fillet, self).__init__(
+            self.__class__.__name__, ingredients_table, ingredients
+        )
 
     @classmethod
     def lexical_name(cls) -> str:
@@ -84,7 +89,9 @@ class Fillet(CookingStep):
 
 class Season(CookingStep):
     def __init__(self, ingredients_table, *ingredients):
-        super(Season, self).__init__(self.__class__.__name__, ingredients_table, ingredients)
+        super(Season, self).__init__(
+            self.__class__.__name__, ingredients_table, ingredients
+        )
 
     @classmethod
     def lexical_name(cls) -> str:
@@ -93,7 +100,9 @@ class Season(CookingStep):
 
 class Fry(CookingStep):
     def __init__(self, ingredients_table, *ingredients):
-        super(Fry, self).__init__(self.__class__.__name__, ingredients_table, ingredients)
+        super(Fry, self).__init__(
+            self.__class__.__name__, ingredients_table, ingredients
+        )
 
     @classmethod
     def lexical_name(cls) -> str:
@@ -102,7 +111,9 @@ class Fry(CookingStep):
 
 class Mix(CookingStep):
     def __init__(self, ingredients_table, *ingredients):
-        super(Mix, self).__init__(self.__class__.__name__, ingredients_table, ingredients)
+        super(Mix, self).__init__(
+            self.__class__.__name__, ingredients_table, ingredients
+        )
 
     @classmethod
     def lexical_name(cls) -> str:
@@ -110,10 +121,7 @@ class Mix(CookingStep):
 
 
 class SemanticAnalyzer:
-    def __init__(
-        self,
-        asts: List
-    ):
+    def __init__(self, asts: List):
         self._INGREDIENTS: Dict[str, Ingredient] = {}
         self.process_ingredients(asts)
 
@@ -121,7 +129,7 @@ class SemanticAnalyzer:
             Fillet.lexical_name(): Fillet,
             Season.lexical_name(): Season,
             Fry.lexical_name(): Fry,
-            Mix.lexical_name(): Mix
+            Mix.lexical_name(): Mix,
         }
 
     def _get_quantity(self, amount, unit):
@@ -146,21 +154,20 @@ class SemanticAnalyzer:
                 ingredient = Ingredient(ast[1], q)
 
                 if ingredient.name in self._INGREDIENTS:
-                    raise RuntimeError(f"The identifier {ingredient.name} "
-                                       f"must be declared only once.")
+                    raise RuntimeError(
+                        f"The identifier {ingredient.name} "
+                        f"must be declared only once."
+                    )
 
                 self._INGREDIENTS[ingredient.name] = ingredient
 
     def validate_cooking_steps(self, asts: List):
-        """Validates the existence of function calls in the program. """
+        """Validates the existence of function calls in the program."""
         for ast in asts:
             if ast[0] == CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
                 funct_call = ast[2]
                 funct_call_name = funct_call[1]
                 if funct_call_name not in self._COOKING_STEPS:
-                    raise RuntimeError(f"Calling unknown Cooking Step: {funct_call_name}")
-
-
-
-
-
+                    raise RuntimeError(
+                        f"Calling unknown Cooking Step: {funct_call_name}"
+                    )
