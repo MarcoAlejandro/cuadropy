@@ -61,19 +61,25 @@ class CookingStep(abc.ABC):
 
     def validate_ingredients(self):
         for ing in self.ingredients:
-            if ing not in self.ingredients_table:
-                raise RuntimeError(f"Ingredient {ing} was used but never declared")
+            if isinstance(ing, Ingredient):
+                if ing not in self.ingredients_table:
+                    raise RuntimeError(f"Ingredient {ing} was used but never declared")
 
-            if not self.ingredients_table[ing].is_usable():
-                raise RuntimeError(
-                    f"Cooking step {self.step} can't use ingredient {ing}. Did you already used it?"
-                )
+                if not self.ingredients_table[ing].is_usable():
+                    raise RuntimeError(
+                        f"Cooking step {self.step} can't use ingredient {ing}. Did you already used it?"
+                    )
+            elif isinstance(ing, CookingStep):
+                pass  # Recursively validates cooking steps
 
     def do(self):
         # At this point somebody should have used `validate_ingredients`
         # Children classes can implement additional logic on top of this one
         for ing in self.ingredients:
-            self.ingredients_table[ing].use()
+            if isinstance(ing, Ingredient):
+                self.ingredients_table[ing].use()
+            elif isinstance(ing, CookingStep):
+                ing.do()
 
 
 class Fillet(CookingStep):
@@ -171,3 +177,64 @@ class SemanticAnalyzer:
                     raise RuntimeError(
                         f"Calling unknown Cooking Step: {funct_call_name}"
                     )
+
+    def _process_nested_cooking_step(self, ast):
+        if ast[0] != CuadroParser.AST_FUNCTION_CALL:
+            raise RuntimeError(f"A nested cooking step must be of AST type {CuadroParser.AST_FUNCTION_CALL}")
+
+        ingredients = []
+        for i in range(2, len(ast[2])):
+            tpl = ast[2][i]
+            if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
+                if tpl[1] not in self._INGREDIENTS:
+                    raise RuntimeError(f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call")
+
+                if not self._INGREDIENTS[tpl[1]].is_usable():
+                    raise RuntimeError(f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call")
+
+                ingredients.append(self._INGREDIENTS[tpl[1]])
+
+            elif tpl[0] == CuadroParser.AST_FUNCTION_CALL:  # The param is a nested function call
+                nested_step = self._process_nested_cooking_step(tpl)
+                ingredients.append(nested_step)
+            else:
+                raise RuntimeError(f"Unknown AST type at runtime: {tpl[0]}")
+
+        step_class = self._COOKING_STEPS[ast[1]]
+        step: CookingStep = step_class(ingredients)
+        return step
+
+    def process_cooking_step(self, ast) -> None:
+        """Parses an AST for a Cooking step.
+
+        This method does a couple of things as side effect:
+            - Inserts the new variable from the AST into the Ingredients table.
+            - It returns the CookingStep instance given the AST.
+        """
+        if ast[0] != CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
+            raise RuntimeError(f"A cooking step must be of AST type {CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION}")
+
+        ingredients = []
+        for i in range(2, len(ast)):
+            tpl = ast[i]
+            if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
+                if tpl[1] not in self._INGREDIENTS:
+                    raise RuntimeError(f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call")
+
+                if not self._INGREDIENTS[tpl[1]].is_usable():
+                    raise RuntimeError(f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call")
+
+                ingredients.append(self._INGREDIENTS[tpl[1]])
+
+            elif tpl[0] == CuadroParser.AST_FUNCTION_CALL:  # The param is a nested function call
+                nested_step = self._process_nested_cooking_step(tpl)
+                ingredients.append(nested_step)
+            else:
+                raise RuntimeError(f"Unknown AST type at runtime: {tpl[0]}")
+
+        step_class = self._COOKING_STEPS[ast[2][1]]
+        step: CookingStep = step_class(ingredients)
+        step.do()
+
+        # Add new variable to INGREDIENTS
+        self._INGREDIENTS[ast[1]] = Ingredient(ast[1], Grams(1))  # TODO: By default value 1. Pay attention
