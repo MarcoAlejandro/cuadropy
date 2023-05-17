@@ -49,10 +49,10 @@ class Ingredient:
 
 
 class CookingStep(abc.ABC):
-    def __init__(self, step: str, ingredients_table, *ingredients):
+    def __init__(self, step: str, ingredients_table, ingredients):
         self.step: str = step
         self.ingredients_table = ingredients_table
-        self.ingredients: List[str] = list(ingredients)
+        self.ingredients: List[Ingredient] = ingredients
 
     @classmethod
     @abc.abstractmethod
@@ -77,13 +77,13 @@ class CookingStep(abc.ABC):
         # Children classes can implement additional logic on top of this one
         for ing in self.ingredients:
             if isinstance(ing, Ingredient):
-                self.ingredients_table[ing].use()
+                self.ingredients_table[ing.name].use()
             elif isinstance(ing, CookingStep):
                 ing.do()
 
 
 class Fillet(CookingStep):
-    def __init__(self, ingredients_table, *ingredients):
+    def __init__(self, ingredients_table, ingredients):
         super(Fillet, self).__init__(
             self.__class__.__name__, ingredients_table, ingredients
         )
@@ -94,7 +94,7 @@ class Fillet(CookingStep):
 
 
 class Season(CookingStep):
-    def __init__(self, ingredients_table, *ingredients):
+    def __init__(self, ingredients_table, ingredients):
         super(Season, self).__init__(
             self.__class__.__name__, ingredients_table, ingredients
         )
@@ -105,7 +105,7 @@ class Season(CookingStep):
 
 
 class Fry(CookingStep):
-    def __init__(self, ingredients_table, *ingredients):
+    def __init__(self, ingredients_table, ingredients):
         super(Fry, self).__init__(
             self.__class__.__name__, ingredients_table, ingredients
         )
@@ -116,7 +116,7 @@ class Fry(CookingStep):
 
 
 class Mix(CookingStep):
-    def __init__(self, ingredients_table, *ingredients):
+    def __init__(self, ingredients_table, ingredients):
         super(Mix, self).__init__(
             self.__class__.__name__, ingredients_table, ingredients
         )
@@ -183,11 +183,10 @@ class SemanticAnalyzer:
             raise RuntimeError(f"A nested cooking step must be of AST type {CuadroParser.AST_FUNCTION_CALL}")
 
         ingredients = []
-        for i in range(2, len(ast[2])):
-            tpl = ast[2][i]
+        for tpl in ast[2:][0]:
             if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
                 if tpl[1] not in self._INGREDIENTS:
-                    raise RuntimeError(f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call")
+                    raise RuntimeError(f"Unknown identifier '{tpl[1]}' used as parameter in {ast[2][1]} call")
 
                 if not self._INGREDIENTS[tpl[1]].is_usable():
                     raise RuntimeError(f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call")
@@ -201,7 +200,7 @@ class SemanticAnalyzer:
                 raise RuntimeError(f"Unknown AST type at runtime: {tpl[0]}")
 
         step_class = self._COOKING_STEPS[ast[1]]
-        step: CookingStep = step_class(ingredients)
+        step: CookingStep = step_class(self._INGREDIENTS, ingredients)
         return step
 
     def process_cooking_step(self, ast) -> None:
@@ -215,8 +214,7 @@ class SemanticAnalyzer:
             raise RuntimeError(f"A cooking step must be of AST type {CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION}")
 
         ingredients = []
-        for i in range(2, len(ast)):
-            tpl = ast[i]
+        for tpl in ast[2:]:
             if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
                 if tpl[1] not in self._INGREDIENTS:
                     raise RuntimeError(f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call")
@@ -233,7 +231,7 @@ class SemanticAnalyzer:
                 raise RuntimeError(f"Unknown AST type at runtime: {tpl[0]}")
 
         step_class = self._COOKING_STEPS[ast[2][1]]
-        step: CookingStep = step_class(ingredients)
+        step: CookingStep = step_class(self._INGREDIENTS, ingredients)
         step.do()
 
         # Add new variable to INGREDIENTS
