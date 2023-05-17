@@ -3,7 +3,7 @@
     implementation
 """
 from sly import Parser
-from lexer.lexer import CuadroLex
+from src.lexer import CuadroLex
 
 
 class CuadroParser(Parser):
