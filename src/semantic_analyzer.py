@@ -1,5 +1,5 @@
 from typing import List, Dict
-from parser.parser import CuadroParser
+from src.parser import CuadroParser
 import abc
 
 
