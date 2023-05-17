@@ -1,0 +1,17 @@
+# Pechugas de Pollo en Salsa de Tomate #
+## Ingredientes ##
+pechugas_pollo=400gr;
+cebolla=1cu;
+diente_ajo=1cu;
+tomate_triturado=500gr;
+oregano=5gr;
+sal=5gr;
+pimienta=5gr;
+aceite_oliva=45ml;
+### Instrucciones ###
+pechugas_fileteadas=filetear(pechugas_pollo);
+pechugas_condimentadas=sazonar(pechugas_pollo, sal, pimienta);
+pechugas_cocidas=sarten(pechugas_condimentadas, aceite_oliva);
+vegetales_fritos=sarten(cebolla, diente_ajo, aceite_oliva);
+vegetales_mezcla=destilar(tomate, vegetales_fritos, oregano);
+plato=sarten(pechugas_cocidas, vegetales_mezcla);
