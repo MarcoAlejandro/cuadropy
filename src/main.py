@@ -1,9 +1,7 @@
-import click
 import pprint
-
 import click
-
 from src.frontend import CuadroFrontend
+from src.output_generator import OutputGenerator
 from src.semantic_analyzer import SemanticAnalyzer
 from src.parser import CuadroParser
 
@@ -30,11 +28,21 @@ def run(filename):
 
     # We can start to semantically evaluate the instructions,
     # And maybe even generate the output code.
+    cooking_steps = []
     for ast in asts:
         if ast[0] == CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
-            sem_analyzer.process_cooking_step(ast)
+            cooking_steps.append(sem_analyzer.process_cooking_step(ast))
 
     print("Semantic Analysis completed. Let's generate output")
+
+    og = OutputGenerator('out.pdf', sem_analyzer)
+
+    for ast in asts:
+        og.generate(ast)
+    for cs in cooking_steps:
+        og.generate(cs)
+    og.write()
+    print("Output has been generated")
 
 
 if __name__ == '__main__':
