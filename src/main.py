@@ -1,11 +1,10 @@
 import click
-from frontend import CuadroFrontend
 import pprint
 
 import click
 
-from frontend import CuadroFrontend
-from semantic_analyzer import SemanticAnalyzer
+from src.frontend import CuadroFrontend
+from src.semantic_analyzer import SemanticAnalyzer
 from src.parser import CuadroParser
 
 

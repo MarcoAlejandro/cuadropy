@@ -1,7 +1,7 @@
 from typing import List
 
-from lexer import CuadroLex
-from parser.parser import CuadroParser
+from src.lexer import CuadroLex
+from src.parser import CuadroParser
 
 
 class CuadroFrontend:
