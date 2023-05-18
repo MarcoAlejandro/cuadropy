@@ -35,7 +35,7 @@ def run(filename):
 
     print("Semantic Analysis completed. Let's generate output")
 
-    og = OutputGenerator('out.pdf', sem_analyzer)
+    og = OutputGenerator("out.pdf", sem_analyzer)
 
     for ast in asts:
         og.generate(ast)
@@ -45,7 +45,5 @@ def run(filename):
     print("Output has been generated")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run()
-
-

@@ -180,20 +180,28 @@ class SemanticAnalyzer:
 
     def _process_nested_cooking_step(self, ast):
         if ast[0] != CuadroParser.AST_FUNCTION_CALL:
-            raise RuntimeError(f"A nested cooking step must be of AST type {CuadroParser.AST_FUNCTION_CALL}")
+            raise RuntimeError(
+                f"A nested cooking step must be of AST type {CuadroParser.AST_FUNCTION_CALL}"
+            )
 
         ingredients = []
         for tpl in ast[2:][0]:
             if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
                 if tpl[1] not in self._INGREDIENTS:
-                    raise RuntimeError(f"Unknown identifier '{tpl[1]}' used as parameter in {ast[2][1]} call")
+                    raise RuntimeError(
+                        f"Unknown identifier '{tpl[1]}' used as parameter in {ast[2][1]} call"
+                    )
 
                 if not self._INGREDIENTS[tpl[1]].is_usable():
-                    raise RuntimeError(f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call")
+                    raise RuntimeError(
+                        f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call"
+                    )
 
                 ingredients.append(self._INGREDIENTS[tpl[1]])
 
-            elif tpl[0] == CuadroParser.AST_FUNCTION_CALL:  # The param is a nested function call
+            elif (
+                tpl[0] == CuadroParser.AST_FUNCTION_CALL
+            ):  # The param is a nested function call
                 nested_step = self._process_nested_cooking_step(tpl)
                 ingredients.append(nested_step)
             else:
@@ -211,20 +219,28 @@ class SemanticAnalyzer:
             - It returns the CookingStep instance given the AST.
         """
         if ast[0] != CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
-            raise RuntimeError(f"A cooking step must be of AST type {CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION}")
+            raise RuntimeError(
+                f"A cooking step must be of AST type {CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION}"
+            )
 
         ingredients = []
         for tpl in ast[2:]:
             if tpl[0] == CuadroParser.AST_IDENTIFIER:  # The param is an ingredient
                 if tpl[1] not in self._INGREDIENTS:
-                    raise RuntimeError(f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call")
+                    raise RuntimeError(
+                        f"Unknown identifier {tpl[1]} used as parameter in {ast[2][1]} call"
+                    )
 
                 if not self._INGREDIENTS[tpl[1]].is_usable():
-                    raise RuntimeError(f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call")
+                    raise RuntimeError(
+                        f"Ingredient {tpl[1]} was already used. It can be used again in {ast[1]} call"
+                    )
 
                 ingredients.append(self._INGREDIENTS[tpl[1]])
 
-            elif tpl[0] == CuadroParser.AST_FUNCTION_CALL:  # The param is a nested function call
+            elif (
+                tpl[0] == CuadroParser.AST_FUNCTION_CALL
+            ):  # The param is a nested function call
                 nested_step = self._process_nested_cooking_step(tpl)
                 ingredients = ingredients + nested_step.ingredients
             else:
@@ -235,5 +251,7 @@ class SemanticAnalyzer:
         step.do()
 
         # Add new variable to INGREDIENTS
-        self._INGREDIENTS[ast[1]] = Ingredient(ast[1], Grams(1))  # TODO: By default value 1. Pay attention
+        self._INGREDIENTS[ast[1]] = Ingredient(
+            ast[1], Grams(1)
+        )  # TODO: By default value 1. Pay attention
         return step
