@@ -23,8 +23,7 @@ def run(filename):
     print("Ingredients identifiers table: ")
     pp.pprint(sem_analyzer._INGREDIENTS)
 
-    # Validates the function calls in cooking steps
-    sem_analyzer.validate_cooking_steps(asts)
+    sem_analyzer.validate_ast()
 
     # We can start to semantically evaluate the instructions,
     # And maybe even generate the output code.

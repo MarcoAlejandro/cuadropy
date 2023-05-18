@@ -129,6 +129,7 @@ class Mix(CookingStep):
 class SemanticAnalyzer:
     def __init__(self, asts: List):
         self._INGREDIENTS: Dict[str, Ingredient] = {}
+        self.asts = asts
         self.process_ingredients(asts)
 
         self._COOKING_STEPS: Dict[str, CookingStep] = {
@@ -167,9 +168,37 @@ class SemanticAnalyzer:
 
                 self._INGREDIENTS[ingredient.name] = ingredient
 
-    def validate_cooking_steps(self, asts: List):
+    def validate_ast(self):
+        # Validates the existence of a title, a title for ingredients and a title of cooking steps
+        self.validate_titles()
+        # Validates the function calls in cooking steps
+        self.validate_cooking_steps()
+        # Validates the structure of the recipe
+        self.validate_receip_structure()
+
+    def validate_titles(self):
+        titles = []
+
+        for ast in self.asts:
+            if ast[0] in [
+                CuadroParser.AST_NODE_TITLE_HEADER,
+                CuadroParser.AST_NODE_INGREDIENTS_HEADER,
+                CuadroParser.AST_NODE_RECIPE_HEADER,
+            ]:
+                titles.append(ast[0])
+
+        if len(titles) != 3:
+            raise RuntimeError("The recipe must have a main title, an ingredients title and recipe title")
+        if titles[0] != CuadroParser.AST_NODE_TITLE_HEADER:
+            raise RuntimeError("The recipe must have a title first")
+        if titles[1] != CuadroParser.AST_NODE_INGREDIENTS_HEADER:
+            raise RuntimeError("The recipe must have ingredients second")
+        if titles[2] != CuadroParser.AST_NODE_RECIPE_HEADER:
+            raise RuntimeError("The recipe must have the recipe third")
+
+    def validate_cooking_steps(self):
         """Validates the existence of function calls in the program."""
-        for ast in asts:
+        for ast in self.asts:
             if ast[0] == CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
                 funct_call = ast[2]
                 funct_call_name = funct_call[1]
@@ -177,6 +206,51 @@ class SemanticAnalyzer:
                     raise RuntimeError(
                         f"Calling unknown Cooking Step: {funct_call_name}"
                     )
+
+    def validate_receip_structure(self):
+        """A Cuadry recipe must have a title, ingredients and cooking steps, in that order"""
+        ast_iter = iter(self.asts)
+
+        # First title must be the title
+        ast = next(ast_iter)
+        if ast[0] != CuadroParser.AST_NODE_TITLE_HEADER:
+            raise RuntimeError("The recipe must start with a title first")
+
+        ast = next(ast_iter)
+        if ast[0] != CuadroParser.AST_NODE_INGREDIENTS_HEADER:
+            raise RuntimeError("The recipe must have ingredients second")
+
+        ingredients_acc = 0
+        while ast:
+            ast = next(ast_iter, None)
+
+            if ast is None:
+                raise RuntimeError("The recipe must have a recipe section")
+            if ast[0] == CuadroParser.AST_NODE_RECIPE_HEADER:
+                break
+
+            if ast[0] != CuadroParser.AST_NODE_INGREDIENT_DECLARATION:
+                raise RuntimeError(
+                    "The recipe ingredients list should be a list of ingredients"
+                )
+            ingredients_acc += 1
+
+        if ingredients_acc == 0:
+            raise RuntimeError("The recipe must have at least one ingredient")
+
+        receipe_acc = 0
+        while ast:
+            ast = next(ast_iter, None)
+            if ast is None:
+                break
+            if ast[0] != CuadroParser.AST_NODE_FUNCTION_BASED_DECLARATION:
+                raise RuntimeError(
+                    "The recipe must have a list of only cooking steps after the recipe header"
+                )
+            receipe_acc += 1
+
+        if receipe_acc == 0:
+            raise RuntimeError("The recipe must have at least one cooking step")
 
     def _process_nested_cooking_step(self, ast):
         if ast[0] != CuadroParser.AST_FUNCTION_CALL:
